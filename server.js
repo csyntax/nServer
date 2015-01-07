@@ -1,28 +1,23 @@
-﻿/*
-* NodeJS server
-* Ivan Ivanov - 2014
-*/
-var http = require('http'),
+﻿var http = require('http'),
 	url = require('url'),
 	util = require('util'),
 	events = require('events'), 		
-    fs = require('fs');	 
-
-var DEFAULT_PORT = 9090;
+    fs = require('fs'),
+    path = require('path'),
+    port = 1234;
 
 function main(argv) {
-    new HttpServer({
+    var server = new HttpServer({
         'GET':createServlet(StaticServlet),
         'POST':createServlet(StaticServlet),
         'HEAD':createServlet(StaticServlet)
-    }).start(Number(argv[2]) || DEFAULT_PORT);
+    }).start(port);
+
+    return server;
 }
 
 function escapeHtml(value) {
-    return value.toString().
-        replace('<', '&lt;').
-        replace('>', '&gt;').
-        replace('"', '&quot;');
+    return value.toString().replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;');
 }
 
 function createServlet(Class) {
@@ -38,7 +33,7 @@ function HttpServer(handlers) {
 HttpServer.prototype.start = function (port) {
     this.port = port;
     this.server.listen(port);    
-    util.puts('Http Server running at http://localhost:' + port + '/');
+    util.puts('Server running at http://localhost:' + this.port + '/');
 };
 
 HttpServer.prototype.parseUrl_ = function (urlString) {
@@ -148,9 +143,7 @@ StaticServlet.prototype.attemptingToAccessOutsideLocalAppPath = function (pathPa
 };
 
 StaticServlet.prototype.sendError_ = function (req, res, error) {
-    res.writeHead(500, {
-        'Content-Type':'text/html'
-    });
+    res.writeHead(500, {'Content-Type':'text/html'});
     res.write('<!doctype html>\n');
     res.write('<title>Internal Server Error</title>\n');
     res.write('<h1>Internal Server Error</h1>');
@@ -161,17 +154,11 @@ StaticServlet.prototype.sendError_ = function (req, res, error) {
 
 StaticServlet.prototype.sendMissing_ = function (req, res, path) {
     path = path.substring(1);
-    res.writeHead(404, {
-        'Content-Type':'text/html'
-    });
+    res.writeHead(404, {'Content-Type':'text/html'});
     res.write('<!doctype html>\n');
     res.write('<title>404 Not Found</title>\n');
     res.write('<h1>Not Found</h1>');
-    res.write(
-        '<p>The requested URL ' +
-            escapeHtml(path) +
-            ' was not found on this server.</p>'
-    );
+    res.write('<p>The requested URL ' + escapeHtml(path) + ' was not found on this server.</p>');
     res.end();
     util.puts('404 Not Found: ' + path);
 };
@@ -211,7 +198,7 @@ StaticServlet.prototype.sendRedirect_ = function (req, res, redirectUrl) {
 
 StaticServlet.prototype.sendDefault_ = function (req, res) {
     var self = this;
-    var path = './index.html'
+    var path = 'app/index.html'
 
     var file = fs.createReadStream(path);
     res.writeHead(200, {
@@ -374,7 +361,6 @@ StaticServlet.prototype.writeDirectoryIndex_ = function (req, res, path, files) 
     res.end();
 };
 
-var path = require('path');
 
 fs.fileExistsSync = function (filePath) {
     try {
@@ -389,7 +375,7 @@ fs.fileExistsSync = function (filePath) {
 
 fs.mkdirSyncRecursive = function(dirPath) {
     try{
-        fs.mkdirSync(dirPath)
+        fs.mkdirSync(dirPath);
     } catch(e) {        
         fs.mkdirSyncRecursive(path.dirname(dirPath));       
         fs.mkdirSyncRecursive(dirPath);
@@ -397,4 +383,4 @@ fs.mkdirSyncRecursive = function(dirPath) {
     }
 };
 
-return main(process.argv);
+main(process.argv);
