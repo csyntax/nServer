@@ -7,13 +7,11 @@
     port = 1234;
 
 function main(argv) {
-    var server = new HttpServer({
+    new HttpServer({
         'GET':createServlet(StaticServlet),
         'POST':createServlet(StaticServlet),
         'HEAD':createServlet(StaticServlet)
-    }).start(port);
-
-    return server;
+    }).start(process.env.PORT || port);
 }
 
 function escapeHtml(value) {
@@ -171,34 +169,24 @@ StaticServlet.prototype.sendForbidden_ = function (req, res, path) {
     res.write('<!doctype html>\n');
     res.write('<title>403 Forbidden</title>\n');
     res.write('<h1>Forbidden</h1>');
-    res.write(
-        '<p>You do not have permission to access ' +
-            escapeHtml(path) + ' on this server.</p>'
-    );
+    res.write('<p>You do not have permission to access ' + escapeHtml(path) + ' on this server.</p>');
     res.end();
     util.puts('403 Forbidden: ' + path);
 };
 
 StaticServlet.prototype.sendRedirect_ = function (req, res, redirectUrl) {
-    res.writeHead(301, {
-        'Content-Type':'text/html',
-        'Location':redirectUrl
-    });
+    res.writeHead(301, {'Content-Type':'text/html', 'Location':redirectUrl});
     res.write('<!doctype html>\n');
     res.write('<title>301 Moved Permanently</title>\n');
     res.write('<h1>Moved Permanently</h1>');
-    res.write(
-        '<p>The document has moved <a href="' +
-            redirectUrl +
-            '">here</a>.</p>'
-    );
+    res.write('<p>The document has moved <a href="' + redirectUrl + '">here</a>.</p>' );
     res.end();
     util.puts('301 Moved Permanently: ' + redirectUrl);
 };
 
 StaticServlet.prototype.sendDefault_ = function (req, res) {
     var self = this;
-    var path = 'app/index.html'
+    var path = 'index.html'
 
     var file = fs.createReadStream(path);
     res.writeHead(200, {
@@ -218,15 +206,10 @@ StaticServlet.prototype.sendDefault_ = function (req, res) {
     }
 };
 
-
-
 StaticServlet.prototype.sendFile_ = function (req, res, path) {
     var self = this;
     var file = fs.createReadStream(path);
-    res.writeHead(200, {
-        'Content-Type':StaticServlet.
-            MimeMap[path.split('.').pop()] || 'text/plain'
-    });
+    res.writeHead(200, {'Content-Type':StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'});
     if (req.method === 'HEAD') {
         res.end();
     } else {
@@ -268,9 +251,7 @@ StaticServlet.prototype.sendAllJsonFilesAppended_ = function (req, res, path) {
 StaticServlet.prototype.writeFile_ = function (req, res, path) {
     var self = this;
 
-    res.writeHead(200, {
-        'Content-Type':'text/plain'
-    });
+    res.writeHead(200, {'Content-Type':'text/plain'});
     if (req.method === 'HEAD') {
         res.end();
     } else {
@@ -365,7 +346,6 @@ StaticServlet.prototype.writeDirectoryIndex_ = function (req, res, path, files) 
 fs.fileExistsSync = function (filePath) {
     try {
         var stats = fs.lstatSync(filePath);
-
         return stats.isFile();
     }
     catch (e) {
@@ -379,7 +359,6 @@ fs.mkdirSyncRecursive = function(dirPath) {
     } catch(e) {        
         fs.mkdirSyncRecursive(path.dirname(dirPath));       
         fs.mkdirSyncRecursive(dirPath);
-
     }
 };
 
