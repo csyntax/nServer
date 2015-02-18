@@ -1,6 +1,5 @@
 ﻿var http = require('http'),
 	url = require('url'),
-	util = require('util'),
 	events = require('events'), 		
     fs = require('fs'),
     path = require('path'),
@@ -23,38 +22,50 @@ function createServlet(Class) {
     return servlet.handleRequest.bind(servlet);
 }
 
-function HttpServer(handlers) {
-    this.handlers = handlers;
-    this.server = http.createServer(this.handleRequest_.bind(this));
-}
 
-HttpServer.prototype.start = function (port) {
-    this.port = port;
-    this.server.listen(port);    
-    util.puts('Server running at http://localhost:' + this.port + '/');
-};
+var HttpServer = (function () {
+    function HttpServer(handlers) {
+        this.handlers = handlers;
+        this.port = port;
+        this.server = http.createServer(this.handleRequest_.bind(this));
+    };
 
-HttpServer.prototype.parseUrl_ = function (urlString) {
-    var parsed = url.parse(urlString);
-    parsed.pathname = url.resolve('/', parsed.pathname);
-    return url.parse(url.format(parsed), true);
-};
+    HttpServer.prototype.start = function (port) {    
+        this.server.listen(this.port);    
+        console.log('Server running at http://localhost:' + this.port + '/');
+    };
 
-HttpServer.prototype.handleRequest_ = function (req, res) {
-    var logEntry = req.method + ' ' + req.url;
-    if (req.headers['user-agent']) {
-        logEntry += ' ' + req.headers['user-agent'];
-    }
-    util.puts(logEntry);
-    req.url = this.parseUrl_(req.url);
-    var handler = this.handlers[req.method];
-    if (!handler) {
-        res.writeHead(501);
-        res.end();
-    } else {
-        handler.call(this, req, res);
-    }
-};
+    HttpServer.prototype.parseUrl_ = function (urlString) {
+        var parsed = url.parse(urlString);
+        parsed.pathname = url.resolve('/', parsed.pathname);
+    
+        return url.parse(url.format(parsed), true);
+    };
+
+    HttpServer.prototype.handleRequest_ = function (req, res) {
+        var logEntry = req.method + ' ' + req.url;
+        if (req.headers['user-agent']) {
+            logEntry += ' ' + req.headers['user-agent'];
+        }
+
+        console.log(logEntry);
+
+        req.url = this.parseUrl_(req.url);
+
+        var handler = this.handlers[req.method];
+
+        if (!handler) {
+            res.writeHead(501);
+            res.end();
+        } else {
+            handler.call(this, req, res);
+        }
+    };
+
+    return HttpServer;
+})();
+
+
 
 function StaticServlet() {}
 
@@ -93,7 +104,7 @@ StaticServlet.prototype.handleRequest = function (req, res) {
 }
 
 StaticServlet.prototype.findAndSendTarget = function(req, path, res, self) {
-util.puts(path);
+console.log(path);
 	fs.stat(path, function (err, stat) {
         if (err && path.indexOf('app/') >= 0)
             return self.sendMissing_(req, res, path);
@@ -146,8 +157,8 @@ StaticServlet.prototype.sendError_ = function (req, res, error) {
     res.write('<title>Internal Server Error</title>\n');
     res.write('<h1>Internal Server Error</h1>');
     res.write('<pre>' + escapeHtml(util.inspect(error)) + '</pre>');
-    util.puts('500 Internal Server Error');
-    util.puts(util.inspect(error));
+    console.log('500 Internal Server Error');
+    console.log(util.inspect(error));
 };
 
 StaticServlet.prototype.sendMissing_ = function (req, res, path) {
@@ -158,7 +169,7 @@ StaticServlet.prototype.sendMissing_ = function (req, res, path) {
     res.write('<h1>Not Found</h1>');
     res.write('<p>The requested URL ' + escapeHtml(path) + ' was not found on this server.</p>');
     res.end();
-    util.puts('404 Not Found: ' + path);
+    console.log('404 Not Found: ' + path);
 };
 
 StaticServlet.prototype.sendForbidden_ = function (req, res, path) {
@@ -171,7 +182,7 @@ StaticServlet.prototype.sendForbidden_ = function (req, res, path) {
     res.write('<h1>Forbidden</h1>');
     res.write('<p>You do not have permission to access ' + escapeHtml(path) + ' on this server.</p>');
     res.end();
-    util.puts('403 Forbidden: ' + path);
+    console.log('403 Forbidden: ' + path);
 };
 
 StaticServlet.prototype.sendRedirect_ = function (req, res, redirectUrl) {
@@ -181,18 +192,18 @@ StaticServlet.prototype.sendRedirect_ = function (req, res, redirectUrl) {
     res.write('<h1>Moved Permanently</h1>');
     res.write('<p>The document has moved <a href="' + redirectUrl + '">here</a>.</p>' );
     res.end();
-    util.puts('301 Moved Permanently: ' + redirectUrl);
+    console.log('301 Moved Permanently: ' + redirectUrl);
 };
 
 StaticServlet.prototype.sendDefault_ = function (req, res) {
     var self = this;
-    var path = 'index.html'
-
+    var path = 'app/index.html';
     var file = fs.createReadStream(path);
+    
     res.writeHead(200, {
-        'Content-Type':StaticServlet.
-            MimeMap[path.split('.').pop()] || 'text/plain'
+        'Content-Type':StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'
     });
+
     if (req.method === 'HEAD') {
         res.end();
     } else {
