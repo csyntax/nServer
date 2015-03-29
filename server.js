@@ -3,7 +3,7 @@
 	events = require('events'), 		
     fs = require('fs'),
     path = require('path'),
-    port = 1234;
+    port = 5050;
 
 function main(argv) {
     new HttpServer({
@@ -201,6 +201,7 @@ StaticServlet.prototype.sendDefault_ = function (req, res) {
     var file = fs.createReadStream(path);
     
     res.writeHead(200, {
+        'Server': "nServer",
         'Content-Type':StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'
     });
 
