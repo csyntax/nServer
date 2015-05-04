@@ -19,6 +19,7 @@ function escapeHtml(value) {
 
 function createServlet(Class) {
     var servlet = new Class();
+
     return servlet.handleRequest.bind(servlet);
 }
 
@@ -65,8 +66,6 @@ var HttpServer = (function () {
     return HttpServer;
 })();
 
-
-
 function StaticServlet() {}
 
 StaticServlet.MimeMap = {
@@ -104,8 +103,9 @@ StaticServlet.prototype.handleRequest = function (req, res) {
 }
 
 StaticServlet.prototype.findAndSendTarget = function(req, path, res, self) {
-console.log(path);
-	fs.stat(path, function (err, stat) {
+    console.log(path);
+	
+    fs.stat(path, function (err, stat) {
         if (err && path.indexOf('app/') >= 0)
             return self.sendMissing_(req, res, path);
         else if (err) {
@@ -125,6 +125,7 @@ console.log(path);
         var indexOfLastSlash = path.lastIndexOf('/');
         var indexOfSecondToLastSlash = path.lastIndexOf('/', indexOfLastSlash-1);
         var secondToLastNode = path.substr(indexOfSecondToLastSlash + 1, indexOfLastSlash-indexOfSecondToLastSlash-1);
+        
         if (stat.isDirectory() && secondToLastNode != "event" && secondToLastNode != "user") {
             if (path.indexOf('/data/') == -1) {
                 return self.sendDefault_(req, res);
@@ -157,6 +158,7 @@ StaticServlet.prototype.sendError_ = function (req, res, error) {
     res.write('<title>Internal Server Error</title>\n');
     res.write('<h1>Internal Server Error</h1>');
     res.write('<pre>' + escapeHtml(util.inspect(error)) + '</pre>');
+
     console.log('500 Internal Server Error');
     console.log(util.inspect(error));
 };
@@ -174,9 +176,7 @@ StaticServlet.prototype.sendMissing_ = function (req, res, path) {
 
 StaticServlet.prototype.sendForbidden_ = function (req, res, path) {
     path = path.substring(1);
-    res.writeHead(403, {
-        'Content-Type':'text/html'
-    });
+    res.writeHead(403, { 'Content-Type':'text/html'});
     res.write('<!doctype html>\n');
     res.write('<title>403 Forbidden</title>\n');
     res.write('<h1>Forbidden</h1>');
@@ -186,7 +186,7 @@ StaticServlet.prototype.sendForbidden_ = function (req, res, path) {
 };
 
 StaticServlet.prototype.sendRedirect_ = function (req, res, redirectUrl) {
-    res.writeHead(301, {'Content-Type':'text/html', 'Location':redirectUrl});
+    res.writeHead(301, {'Content-Type':'text/html', 'Location': redirectUrl });
     res.write('<!doctype html>\n');
     res.write('<title>301 Moved Permanently</title>\n');
     res.write('<h1>Moved Permanently</h1>');
@@ -201,7 +201,6 @@ StaticServlet.prototype.sendDefault_ = function (req, res) {
     var file = fs.createReadStream(path);
     
     res.writeHead(200, {
-        'Server': "nServer",
         'Content-Type':StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'
     });
 
@@ -237,7 +236,8 @@ StaticServlet.prototype.sendFile_ = function (req, res, path) {
 
 StaticServlet.prototype.sendAllJsonFilesAppended_ = function (req, res, path) {
     var self = this;
-    var files = []
+    var files = [];
+
     try {
         files = fs.readdirSync(path);
     }
@@ -246,12 +246,15 @@ StaticServlet.prototype.sendAllJsonFilesAppended_ = function (req, res, path) {
         res.write("[]");
         res.end();
     }
+
     var results = "[";
+    
     for (var idx = 0; idx < files.length; idx++) {
         if (files[idx].indexOf(".json") == files[idx].length - 5) {
             results += fs.readFileSync(path + "/" + files[idx]) + ",";
         }
     }
+    
     results = results.substr(0, results.length - 1);
     results += "]";
     self.writeSuccessHeader(res, path);
@@ -264,15 +267,20 @@ StaticServlet.prototype.writeFile_ = function (req, res, path) {
     var self = this;
 
     res.writeHead(200, {'Content-Type':'text/plain'});
+    
     if (req.method === 'HEAD') {
         res.end();
     } else {
         var targetDir = path.substr(0, path.lastIndexOf('/'));
         var dirExists;
+    
         try {
             var stats = fs.lstatSync(targetDir);
+            
             dirExists = stats.isDirectory();
-        } catch(e) {dirExists = false;}
+        } catch(e) {
+            dirExists = false;
+        }
 
         if (!dirExists) {
             fs.mkdirSyncRecursive(targetDir);
@@ -281,7 +289,7 @@ StaticServlet.prototype.writeFile_ = function (req, res, path) {
         req.pipe(writeStream);
 
         req.on('end', function () {
-            res.writeHead(200, {"content-type":"text/html"});
+            res.writeHead(200, {"content-type": "text/html" });
             res.end('<html><body>Save Successful</body></html>');
         });
 
@@ -294,29 +302,36 @@ StaticServlet.prototype.writeFile_ = function (req, res, path) {
 
 StaticServlet.prototype.writeSuccessHeader = function (res, path) {
     res.writeHead(200, {
-        'Content-Type':StaticServlet.
-            MimeMap[path.split('.').pop()] || 'text/plain'
+        'Content-Type' : StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'
     });
 }
 StaticServlet.prototype.sendDirectory_ = function (req, res, path) {
     var self = this;
+    
     if (path.match(/[^\/]$/)) {
         req.url.pathname += '/';
+        
         var redirectUrl = url.format(url.parse(url.format(req.url)));
+        
         return self.sendRedirect_(req, res, redirectUrl);
     }
-    fs.readdir(path, function (err, files) {
-        if (err)
-            return self.sendError_(req, res, error);
 
-        if (!files.length)
+    fs.readdir(path, function (err, files) {
+        if (err){
+            return self.sendError_(req, res, error);
+        }
+
+        if (!files.length){
             return self.writeDirectoryIndex_(req, res, path, []);
+        }
 
         var remaining = files.length;
+
         files.forEach(function (fileName, index) {
             fs.stat(path + '/' + fileName, function (err, stat) {
-                if (err)
+                if (err){
                     return self.sendError_(req, res, err);
+                }
                 if (stat.isDirectory()) {
                     files[index] = fileName + '/';
                 }
@@ -329,9 +344,7 @@ StaticServlet.prototype.sendDirectory_ = function (req, res, path) {
 
 StaticServlet.prototype.writeDirectoryIndex_ = function (req, res, path, files) {
     path = path.substring(1);
-    res.writeHead(200, {
-        'Content-Type':'text/html'
-    });
+    res.writeHead(200, { 'Content-Type':'text/html'});
     if (req.method === 'HEAD') {
         res.end();
         return;
