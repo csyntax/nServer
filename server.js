@@ -1,15 +1,18 @@
-﻿var http = require('http'),
-	url = require('url'),
-	events = require('events'), 		
-    fs = require('fs'),
-    path = require('path'),
-    port = 5050;
+﻿var http = require('http');
+var	url = require('url');
+var	events = require('events'); 		
+var fs = require('fs');
+var path = require('path');
+
+var port = 5050;
 
 function main(argv) {
+    "use strict";
+    
     new HttpServer({
-        'GET':createServlet(StaticServlet),
-        'POST':createServlet(StaticServlet),
-        'HEAD':createServlet(StaticServlet)
+        "GET": createServlet(StaticServlet),
+        "POST": createServlet(StaticServlet),
+        "HEAD": createServlet(StaticServlet)
     }).start(process.env.PORT || port);
 }
 
@@ -33,11 +36,12 @@ var HttpServer = (function () {
 
     HttpServer.prototype.start = function (port) {    
         this.server.listen(this.port);    
-        console.log('Server running at http://localhost:' + this.port + '/');
+        console.log('Server running at http://localhost:' + this.port);
     };
 
     HttpServer.prototype.parseUrl_ = function (urlString) {
         var parsed = url.parse(urlString);
+        
         parsed.pathname = url.resolve('/', parsed.pathname);
     
         return url.parse(url.format(parsed), true);
@@ -45,6 +49,7 @@ var HttpServer = (function () {
 
     HttpServer.prototype.handleRequest_ = function (req, res) {
         var logEntry = req.method + ' ' + req.url;
+        
         if (req.headers['user-agent']) {
             logEntry += ' ' + req.headers['user-agent'];
         }
@@ -69,17 +74,17 @@ var HttpServer = (function () {
 function StaticServlet() {}
 
 StaticServlet.MimeMap = {
-    'txt':'text/plain',
-    'html':'text/html',
-    'css':'text/css',
-    'xml':'application/xml',
-    'json':'application/json',
-    'js':'application/javascript',
-    'jpg':'image/jpeg',
-    'jpeg':'image/jpeg',
-    'gif':'image/gif',
-    'png':'image/png',
-    'svg':'image/svg+xml'
+    'txt': 'text/plain',
+    'html': 'text/html',
+    'css': 'text/css',
+    'xml': 'application/xml',
+    'json': 'application/json',
+    'js': 'application/javascript',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'png': 'image/png',
+    'svg': 'image/svg+xml'
 };
 
 StaticServlet.prototype.handleRequest = function (req, res) {
@@ -88,8 +93,10 @@ StaticServlet.prototype.handleRequest = function (req, res) {
         return String.fromCharCode(parseInt(hex, 16));
     });
     var parts = path.split('/');
-    if (parts[parts.length - 1].charAt(0) === '.')
+
+    if (parts[parts.length - 1].charAt(0) === '.'){
         return self.sendForbidden_(req, res, path);
+    }
 
     if (req.method === 'POST') {
         if (self.attemptingToAccessOutsideLocalAppPath(parts)) {
@@ -106,9 +113,9 @@ StaticServlet.prototype.findAndSendTarget = function(req, path, res, self) {
     console.log(path);
 	
     fs.stat(path, function (err, stat) {
-        if (err && path.indexOf('app/') >= 0)
+        if (err && path.indexOf('app/') >= 0){
             return self.sendMissing_(req, res, path);
-        else if (err) {
+        } else if (err) {
             if (path.indexOf('.json') == -1) {
                 return self.findAndSendTarget(req, path + ".json", res, self);
             } else if (!fs.fileExistsSync(path + ".json") && path.indexOf('/data/') != -1) {
@@ -335,8 +342,9 @@ StaticServlet.prototype.sendDirectory_ = function (req, res, path) {
                 if (stat.isDirectory()) {
                     files[index] = fileName + '/';
                 }
-                if (!(--remaining))
+                if (!(--remaining)){
                     return self.writeDirectoryIndex_(req, res, path, files);
+                }
             });
         });
     });
