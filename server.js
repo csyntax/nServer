@@ -1,14 +1,12 @@
-﻿var http = require('http');
-var	url = require('url');
-var	events = require('events'); 		
-var fs = require('fs');
-var path = require('path');
+﻿var http = require("http");
+var	url = require("url");
+var	events = require("events"); 		
+var fs = require("fs");
+var path = require("path");
 
-var port = 5050;
+var port = 5000;
 
-function main(argv) {
-    "use strict";
-    
+function main(argv) {    
     new HttpServer({
         "GET": createServlet(StaticServlet),
         "POST": createServlet(StaticServlet),
@@ -25,7 +23,6 @@ function createServlet(Class) {
 
     return servlet.handleRequest.bind(servlet);
 }
-
 
 var HttpServer = (function () {
     function HttpServer(handlers) {
@@ -71,20 +68,20 @@ var HttpServer = (function () {
     return HttpServer;
 })();
 
-function StaticServlet() {}
+function StaticServlet() {};
 
 StaticServlet.MimeMap = {
-    'txt': 'text/plain',
-    'html': 'text/html',
-    'css': 'text/css',
-    'xml': 'application/xml',
-    'json': 'application/json',
-    'js': 'application/javascript',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'gif': 'image/gif',
-    'png': 'image/png',
-    'svg': 'image/svg+xml'
+    "txt": "text/plain",
+    "html": "text/html",
+    "css": "text/css",
+    "xml": "application/xml",
+    "json": "application/json",
+    "js": "application/javascript",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "gif": "image/gif",
+    "png": "image/png",
+    "svg": "image/svg+xml",
 };
 
 StaticServlet.prototype.handleRequest = function (req, res) {
