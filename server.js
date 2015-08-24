@@ -5,14 +5,12 @@ var fs = require("fs");
 var url = require("url");
 var events = require("events");
 
-var DEFAULT_PORT = 5000;
-
 function main(argv) {
     new HttpServer({
-        "GET":createServlet(StaticServlet),
-        //"POST":createServlet(StaticServlet),
-        "HEAD":createServlet(StaticServlet)
-    }).start(Number(process.env.PORT || DEFAULT_PORT));
+        "GET": createServlet(StaticServlet),
+        "POST": createServlet(StaticServlet),
+        "HEAD": createServlet(StaticServlet)
+    }).start(Number(process.env.PORT || 5000));
 }
 
 function escapeHtml(value) {
@@ -21,8 +19,7 @@ function escapeHtml(value) {
 
 function createServlet(Class) {
     var servlet = new Class();
-	
-    return servlet.handleRequest.bind(servlet);
+	return servlet.handleRequest.bind(servlet);
 }
 
 function HttpServer(handlers) {
@@ -213,10 +210,7 @@ StaticServlet.prototype.sendDefault_ = function (req, res) {
     var path = './app/index.html'
 
     var file = fs.createReadStream(path);
-    res.writeHead(200, {
-        'Content-Type':StaticServlet.
-            MimeMap[path.split('.').pop()] || 'text/plain'
-    });
+    res.writeHead(200, {'Content-Type':StaticServlet.MimeMap[path.split('.').pop()] || 'text/plain'});
     if (req.method === 'HEAD') {
         res.end();
     } else {
@@ -278,9 +272,7 @@ StaticServlet.prototype.sendAllJsonFilesAppended_ = function (req, res, path) {
 StaticServlet.prototype.writeFile_ = function (req, res, path) {
     var self = this;
 
-    res.writeHead(200, {
-        'Content-Type':'text/plain'
-    });
+    res.writeHead(200, {'Content-Type':'text/plain'});
     if (req.method === 'HEAD') {
         res.end();
     } else {
@@ -346,9 +338,7 @@ StaticServlet.prototype.sendDirectory_ = function (req, res, path) {
 
 StaticServlet.prototype.writeDirectoryIndex_ = function (req, res, path, files) {
     path = path.substring(1);
-    res.writeHead(200, {
-        'Content-Type':'text/html'
-    });
+    res.writeHead(200, {'Content-Type':'text/html'});
     if (req.method === 'HEAD') {
         res.end();
         return;
