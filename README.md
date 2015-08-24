@@ -1,4 +1,3 @@
 nServer
 ============
-
-NodeJS web server 
+NodeJS web server
